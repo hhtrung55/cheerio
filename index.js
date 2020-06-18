@@ -1,23 +1,46 @@
-const express = require("express");
-const app = express();
-
+// Write Javascript code here
 const request = require("request");
-const cheerio = require('cheerio')
+const cheerio = require("cheerio");
+const fs = require("fs");
 
-app.use(express.static("public"));
-app.set("view engine", "ejs");
-app.set("views", "./views");
-app.listen(3003, () => console.log("http://localhost:3003"));
+const URL = "https://ketqua.net/";
 
-app.get("/", function (req, res) {
-  request("http://vnexpress.net", (err, response, body) => {
-    if (err) {
-      console.log(err);
-    } else {
-      $ = cheerio.load(body)
-      var ds = $(body).find('h3.title_news')
-      console.log('ds',ds)
-      res.render("trangchu", {html: ds});
-    }
-  });
+request(URL, function (err, res, body) {
+  if (err) {
+    console.log(err);
+  } else {
+    const arr = [];
+    let $ = cheerio.load(body);
+
+    let obj = {};
+    $("#result_tab_mb").each(function (index, element) {
+      obj.date = $(this).find("#result_date").text();
+      $(this)
+        .find("tbody > tr")
+        .each(function (iTr, tr) {
+          if (iTr !== 10) {
+            let nameResult = iTr;
+            $(this)
+              .find("tr > td")
+              .each(function (iTd, td) {
+                if (iTd == 0) {
+                  nameResult = $(td).text();
+                  obj[nameResult] = [];
+                } else {
+                  obj[nameResult].push($(td).text());
+                }
+              });
+          }
+        });
+    });
+    arr.push(JSON.stringify(obj));
+
+    fs.writeFile("data.json", arr, function (err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("success");
+      }
+    });
+  }
 });
